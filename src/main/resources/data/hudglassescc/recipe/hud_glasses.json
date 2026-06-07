@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "hudglassescc",
+  "pattern": [
+    "MLM"
+  ],
+  "key": {
+    "M": { "item": "computercraft:monitor_advanced" },
+    "L": { "item": "minecraft:leather" }
+  },
+  "result": {
+    "id": "hudglassescc:hud_glasses",
+    "count": 1
+  }
+}

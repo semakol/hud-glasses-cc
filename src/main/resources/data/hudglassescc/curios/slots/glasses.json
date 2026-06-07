@@ -1,0 +1,7 @@
+{
+  "size": 1,
+  "order": 100,
+  "icon": "hudglassescc:slot/empty_glasses",
+  "validators": ["curios:tag"],
+  "operation": "SET"
+}

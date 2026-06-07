@@ -1,0 +1,17 @@
+{
+  "item.hudglassescc.hud_glasses": "HUD Glasses",
+  "curios.identifier.glasses": "Glasses",
+  "curios.modifiers.glasses": "When equipped as Glasses:",
+  "hudglassescc.item.hud_glasses.tooltip": "Hold in hand and right-click a HUD Modem to bind these glasses to it. Whoever wears them (Glasses slot or helmet) sees that modem's HUD.",
+  "hudglassescc.item.hud_glasses.bound": "Bound to modem #%s",
+  "hudglassescc.item.hud_glasses.not_bound": "Not bound",
+  "block.hudglassescc.hud_modem": "HUD Modem",
+  "hudglassescc.modem.bound": "Glasses bound to HUD Modem #%s",
+  "hudglassescc.modem.unbound": "Glasses unbound",
+  "hudglassescc.modem.status_idle": "HUD Modem #%s: no viewers",
+  "hudglassescc.modem.status_viewers": "HUD Modem #%s viewers: %s",
+  "key.categories.hudglassescc": "CC: HUD Glasses",
+  "key.hudglassescc.toggle_hud": "Toggle HUD",
+  "hudglassescc.hud.enabled": "HUD on",
+  "hudglassescc.hud.disabled": "HUD off"
+}

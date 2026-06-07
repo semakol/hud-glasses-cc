@@ -1,0 +1,17 @@
+{
+  "item.hudglassescc.hud_glasses": "HUD очки",
+  "curios.identifier.glasses": "Очки",
+  "curios.modifiers.glasses": "В слоте очков:",
+  "hudglassescc.item.hud_glasses.tooltip": "Держа в руке, нажмите ПКМ по HUD-модему чтобы привязать очки к нему. Кто наденет их (слот очков или шлема) — видит HUD этого модема.",
+  "hudglassescc.item.hud_glasses.bound": "Привязаны к модему №%s",
+  "hudglassescc.item.hud_glasses.not_bound": "Не привязаны",
+  "block.hudglassescc.hud_modem": "HUD модем",
+  "hudglassescc.modem.bound": "Очки привязаны к HUD модему №%s",
+  "hudglassescc.modem.unbound": "Привязка очков снята",
+  "hudglassescc.modem.status_idle": "HUD модем №%s: нет зрителей",
+  "hudglassescc.modem.status_viewers": "HUD модем №%s, зрители: %s",
+  "key.categories.hudglassescc": "CC: HUD Glasses",
+  "key.hudglassescc.toggle_hud": "Включить/выключить HUD",
+  "hudglassescc.hud.enabled": "HUD включен",
+  "hudglassescc.hud.disabled": "HUD выключен"
+}
