@@ -1,17 +1,17 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "minecraft:block/iron_block",
-    "top": "minecraft:block/iron_block",
-    "side": "minecraft:block/iron_block",
-    "bottom": "minecraft:block/iron_block"
+    "particle": "hudglassescc:block/hud_modem_side",
+    "top": "hudglassescc:block/hud_modem_top",
+    "side": "hudglassescc:block/hud_modem_side",
+    "bottom": "hudglassescc:block/hud_modem_bottom"
   },
   "elements": [
     {
-      "from": [2, 0, 2],
-      "to": [14, 6, 14],
+      "from": [1, 0, 1],
+      "to": [15, 3, 15],
       "faces": {
-        "down":  { "texture": "#bottom", "cullface": "down" },
+        "down":  { "texture": "#bottom" },
         "up":    { "texture": "#top" },
         "north": { "texture": "#side" },
         "south": { "texture": "#side" },

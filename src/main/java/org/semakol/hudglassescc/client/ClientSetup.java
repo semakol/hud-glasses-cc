@@ -20,7 +20,14 @@ public final class ClientSetup {
             "key.hudglassescc.toggle_hud",
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
-            InputConstants.KEY_G,
+            InputConstants.KEY_H,
+            "key.categories.hudglassescc");
+
+    /** Opens the mod's config screen. Unbound by default (UNKNOWN). */
+    public static final KeyMapping OPEN_CONFIG = new KeyMapping(
+            "key.hudglassescc.open_config",
+            KeyConflictContext.IN_GAME,
+            InputConstants.UNKNOWN,
             "key.categories.hudglassescc");
 
     private ClientSetup() {}
@@ -33,6 +40,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(TOGGLE_HUD);
+        event.register(OPEN_CONFIG);
     }
 
     @SubscribeEvent
@@ -49,6 +57,9 @@ public final class ClientSetup {
                                 : "hudglassescc.hud.disabled"),
                         true);
             }
+        }
+        while (OPEN_CONFIG.consumeClick()) {
+            ConfigScreenSetup.open();
         }
     }
 }

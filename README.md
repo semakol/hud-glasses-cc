@@ -111,8 +111,25 @@ Client config (`config/hudglassescc-client.toml`, per-player):
 
 | Key | Default | Meaning |
 |---|---|---|
-| `hudEnabled` | true | Whether the HUD renders. Toggle with the **G** key. |
+| `hudEnabled` | true | Whether the HUD renders. Toggle with the **H** key. |
+| `hudFit` | FIT | How the HUD scales to the screen — see [Screen resolution](#screen-resolution). |
 | `textShadow` | NONE | Text shadow style: `NONE` / `SHADOW` / `OUTLINE`. *(experimental)* |
+
+Edit these from **Mods → CC: HUD Glasses → Config**, or bind a key to "Open
+settings" to jump straight to the client section.
+
+### Screen resolution
+
+Two things control how the HUD looks on screen:
+
+- **Buffer size** (server / Lua) — the character grid. Set the defaults with
+  `hudWidth` / `hudHeight`, or per-modem at runtime with `hud.setSize(w, h)`.
+  Fewer cells = bigger text. A grid near 16:9 (e.g. 80×28) fills a widescreen
+  monitor cleanly.
+- **Screen fit** (client `hudFit`) — how that grid is scaled onto your screen:
+  - `FIT` — keep aspect ratio, centered; letterbox bars where it doesn't match.
+  - `STRETCH` — fill the whole screen; distorts if the grid ratio differs.
+  - `COVER` — keep aspect ratio, scaled up to cover the screen; crops the overflow.
 
 When a player is past the distance limit they keep the **last delivered frame**;
 they get a fresh one as soon as they're back in range.

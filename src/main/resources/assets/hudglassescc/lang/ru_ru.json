@@ -12,6 +12,21 @@
   "hudglassescc.modem.status_viewers": "HUD модем №%s, зрители: %s",
   "key.categories.hudglassescc": "CC: HUD Glasses",
   "key.hudglassescc.toggle_hud": "Включить/выключить HUD",
+  "key.hudglassescc.open_config": "Открыть настройки",
   "hudglassescc.hud.enabled": "HUD включен",
-  "hudglassescc.hud.disabled": "HUD выключен"
+  "hudglassescc.hud.disabled": "HUD выключен",
+
+  "hudglassescc.config.client.title": "CC: HUD Glasses — Клиент",
+  "hudglassescc.config.hudEnabled": "Показывать HUD",
+  "hudglassescc.config.hudEnabled.tooltip": "Рисуется ли HUD-оверлей. Также переключается клавишей.",
+  "hudglassescc.config.textShadow": "Тень текста",
+  "hudglassescc.config.textShadow.tooltip": "Тень/обводка текста HUD. NONE / SHADOW / OUTLINE (экспериментально).",
+  "hudglassescc.config.hudFit": "Вписывание в экран",
+  "hudglassescc.config.hudFit.tooltip": "FIT — пропорции, STRETCH — на весь экран, COVER — заполнить с обрезкой.",
+  "hudglassescc.config.hudWidth": "Ширина HUD",
+  "hudglassescc.config.hudWidth.tooltip": "Ширина сетки HUD в символах. Меньше клеток — крупнее текст.",
+  "hudglassescc.config.hudHeight": "Высота HUD",
+  "hudglassescc.config.hudHeight.tooltip": "Высота сетки HUD в символах.",
+  "hudglassescc.config.maxRangeBlocks": "Макс. дистанция (блоки)",
+  "hudglassescc.config.maxRangeBlocks.tooltip": "Макс. расстояние модем–игрок. -1 = без ограничения."
 }

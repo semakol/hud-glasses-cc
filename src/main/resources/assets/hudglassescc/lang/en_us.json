@@ -12,6 +12,21 @@
   "hudglassescc.modem.status_viewers": "HUD Modem #%s viewers: %s",
   "key.categories.hudglassescc": "CC: HUD Glasses",
   "key.hudglassescc.toggle_hud": "Toggle HUD",
+  "key.hudglassescc.open_config": "Open settings",
   "hudglassescc.hud.enabled": "HUD on",
-  "hudglassescc.hud.disabled": "HUD off"
+  "hudglassescc.hud.disabled": "HUD off",
+
+  "hudglassescc.config.client.title": "CC: HUD Glasses — Client",
+  "hudglassescc.config.hudEnabled": "Enable HUD",
+  "hudglassescc.config.hudEnabled.tooltip": "Whether the HUD overlay is rendered. Also toggled with the keybind.",
+  "hudglassescc.config.textShadow": "Text shadow",
+  "hudglassescc.config.textShadow.tooltip": "Shadow/outline behind HUD text. NONE / SHADOW / OUTLINE (experimental).",
+  "hudglassescc.config.hudFit": "Screen fit",
+  "hudglassescc.config.hudFit.tooltip": "FIT keeps aspect ratio, STRETCH fills the screen, COVER crops to cover it.",
+  "hudglassescc.config.hudWidth": "HUD width",
+  "hudglassescc.config.hudWidth.tooltip": "HUD grid width in characters. Fewer cells = bigger text.",
+  "hudglassescc.config.hudHeight": "HUD height",
+  "hudglassescc.config.hudHeight.tooltip": "HUD grid height in characters.",
+  "hudglassescc.config.maxRangeBlocks": "Max range (blocks)",
+  "hudglassescc.config.maxRangeBlocks.tooltip": "Max modem-to-player distance. -1 = unlimited."
 }

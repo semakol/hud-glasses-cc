@@ -35,10 +35,15 @@ If you've ever written a monitor program, you already know this peripheral.
   characters (box-drawing, sub-pixel blocks, arrows) look exactly like a real
   terminal.
 - Runtime resolution — setSize(w, h) from Lua, or set defaults in the config.
-  Fewer cells means bigger text; the HUD always fills the screen.
+  Fewer cells means bigger text. Choose how the grid maps to the screen: FIT
+  (keep aspect, letterbox), STRETCH (fill the screen), or COVER (fill + crop).
 - Shared screens — bind several glasses to one modem and everyone sees the same
   display. Good for team status boards, base alarms, and shared coordinates.
-- Toggle key — press G to hide or show the HUD; the setting persists.
+- Place anywhere — the modem mounts on any block face (floor, wall, ceiling),
+  screen facing out.
+- In-game config — edit settings from the Mods list "Config" button, or bind a
+  key to jump straight to the client settings.
+- Toggle key — press H to hide or show the HUD; the setting persists.
 - Optimized rendering — batched draws and a server-side payload cache keep the
   overhead low even for large, frequently-updated displays.
 
@@ -68,7 +73,9 @@ Server (hudglassescc-common.toml, applied live):
 
 Client (hudglassescc-client.toml, per-player):
 
-- hudEnabled (default true) — render the HUD, toggle with the G key
+- hudEnabled (default true) — render the HUD, toggle with the H key
+- hudFit (default FIT) — how the HUD scales to the screen: FIT (keep aspect,
+  letterbox), STRETCH (fill, may distort), COVER (fill, crops overflow)
 - textShadow (default NONE) — text shadow style: NONE / SHADOW / OUTLINE
   (experimental)
 

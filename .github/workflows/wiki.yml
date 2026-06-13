@@ -1,0 +1,96 @@
+name: Sync docs to Wiki
+
+# Mirrors the repo's docs into the GitHub Wiki on every push that touches them.
+# Prerequisites (one-time):
+#   1. Settings → Features → enable "Wikis".
+#   2. Open the Wiki tab and click "Create the first page" → Save (this actually
+#      creates the <repo>.wiki.git repository; the clone below fails until then).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'README_ru.md'
+      - 'CHANGELOG.md'
+      - 'docs/**'
+      - '.github/workflows/wiki.yml'
+  workflow_dispatch:   # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write       # the wiki repo uses the same token/permissions
+
+concurrency:
+  group: wiki-sync       # never run two syncs at once
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Clone the wiki repo
+        run: |
+          git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git" wiki
+
+      - name: Build wiki pages
+        run: |
+          # Map source files → wiki page names. The page named "Home" is the landing page.
+          # Wiki links use page names (no path, no .md), so rewrite cross-page links with sed.
+
+          cp README.md wiki/Home.md
+          sed -i \
+            -e 's#](README_ru\.md)#](Home-Russian)#g' \
+            -e 's#](docs/API\.md)#](API)#g' \
+            -e 's#](docs/CHARS\.md)#](Character-Encoding)#g' \
+            wiki/Home.md
+
+          cp README_ru.md wiki/Home-Russian.md
+          sed -i \
+            -e 's#](README\.md)#](Home)#g' \
+            -e 's#](docs/API_ru\.md)#](API-Russian)#g' \
+            -e 's#](docs/CHARS\.md)#](Character-Encoding)#g' \
+            wiki/Home-Russian.md
+
+          cp docs/API.md wiki/API.md
+          sed -i \
+            -e 's#](API_ru\.md)#](API-Russian)#g' \
+            -e 's#](CHARS\.md)#](Character-Encoding)#g' \
+            wiki/API.md
+
+          cp docs/API_ru.md wiki/API-Russian.md
+          sed -i \
+            -e 's#](API\.md)#](API)#g' \
+            -e 's#](CHARS\.md)#](Character-Encoding)#g' \
+            wiki/API-Russian.md
+
+          cp docs/CHARS.md wiki/Character-Encoding.md
+          cp CHANGELOG.md  wiki/Changelog.md
+
+          # Sidebar for navigation.
+          cat > wiki/_Sidebar.md <<'EOF'
+          ### CC: HUD Glasses
+          - [Home](Home)
+          - [Lua API](API)
+          - [Character Encoding](Character-Encoding)
+          - [Changelog](Changelog)
+
+          ---
+          - [Главная (RU)](Home-Russian)
+          - [Lua API (RU)](API-Russian)
+          EOF
+
+      - name: Commit & push if changed
+        working-directory: wiki
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Wiki already up to date."
+          else
+            git commit -m "Sync wiki from ${{ github.sha }}"
+            git push
+          fi

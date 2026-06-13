@@ -63,11 +63,35 @@ public final class HudOverlay {
         int bufferPxW = width * CELL_W;
         int bufferPxH = height * CELL_H;
 
-        float scale = Math.min((float) screenW / bufferPxW, (float) screenH / bufferPxH);
-        float renderedW = bufferPxW * scale;
-        float renderedH = bufferPxH * scale;
-        float xOff = (screenW - renderedW) * 0.5f;
-        float yOff = (screenH - renderedH) * 0.5f;
+        float ratioX = (float) screenW / bufferPxW;
+        float ratioY = (float) screenH / bufferPxH;
+        float scaleX, scaleY, xOff, yOff;
+        switch (ClientConfig.HUD_FIT.get()) {
+            case STRETCH -> {
+                // Fill the whole screen; X and Y scale independently (may distort).
+                scaleX = ratioX;
+                scaleY = ratioY;
+                xOff = 0;
+                yOff = 0;
+            }
+            case COVER -> {
+                // Keep aspect ratio, scale up to cover the screen; overflow is
+                // drawn off-screen and naturally cropped by the framebuffer.
+                float s = Math.max(ratioX, ratioY);
+                scaleX = s;
+                scaleY = s;
+                xOff = (screenW - bufferPxW * s) * 0.5f;
+                yOff = (screenH - bufferPxH * s) * 0.5f;
+            }
+            default -> { // FIT
+                // Keep aspect ratio, centered (letterboxed).
+                float s = Math.min(ratioX, ratioY);
+                scaleX = s;
+                scaleY = s;
+                xOff = (screenW - bufferPxW * s) * 0.5f;
+                yOff = (screenH - bufferPxH * s) * 0.5f;
+            }
+        }
 
         Font font = mc.font;
         int[] palette = data.palette();
@@ -78,7 +102,7 @@ public final class HudOverlay {
         PoseStack pose = g.pose();
         pose.pushPose();
         pose.translate(xOff, yOff, 0);
-        pose.scale(scale, scale, 1f);
+        pose.scale(scaleX, scaleY, 1f);
 
         // Pass 1: bg fills, runs of same colour per row.
         // g.fill writes to the gui RenderType buffer with flushIfUnmanaged() —

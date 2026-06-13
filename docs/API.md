@@ -115,10 +115,16 @@ exists only for compatibility with libraries that read/write it.
 
 ## Size
 
+The buffer is a character grid. How it maps onto the player's screen is a
+*client* choice — the `hudFit` setting: `FIT` (keep aspect, letterbox, default),
+`STRETCH` (fill the screen, may distort), or `COVER` (fill + crop). Your script
+only controls the grid size; each viewer controls the fit. A grid near 16:9
+(e.g. 80×28) fills a widescreen monitor cleanly under any mode.
+
 ### `getSize() → width, height`
 
-Returns the current grid size **in characters** (not pixels). The HUD always fills
-the screen, so fewer cells means a bigger glyph per cell.
+Returns the current grid size **in characters** (not pixels). Fewer cells means a
+bigger glyph per cell.
 
 ### `setSize(width, height)`
 

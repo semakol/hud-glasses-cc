@@ -1,5 +1,10 @@
 {
   "variants": {
-    "": { "model": "hudglassescc:block/hud_modem" }
+    "facing=up":    { "model": "hudglassescc:block/hud_modem" },
+    "facing=down":  { "model": "hudglassescc:block/hud_modem", "x": 180 },
+    "facing=north": { "model": "hudglassescc:block/hud_modem", "x": 90 },
+    "facing=south": { "model": "hudglassescc:block/hud_modem", "x": 270 },
+    "facing=east":  { "model": "hudglassescc:block/hud_modem", "x": 90, "y": 90 },
+    "facing=west":  { "model": "hudglassescc:block/hud_modem", "x": 90, "y": 270 }
   }
 }

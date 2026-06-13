@@ -23,10 +23,20 @@ public class ClientConfig {
         OUTLINE
     }
 
+    public enum HudFit {
+        /** Keep aspect ratio, centered. Letterbox bars where it doesn't match. */
+        FIT,
+        /** Stretch to fill the whole screen; X and Y scale independently (distorts). */
+        STRETCH,
+        /** Keep aspect ratio, scaled up to cover the screen; overflow is cropped. */
+        COVER
+    }
+
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     public static final ModConfigSpec.BooleanValue HUD_ENABLED = BUILDER
             .comment("Whether the HUD overlay is rendered. Toggle with the configured key.")
+            .translation("hudglassescc.config.hudEnabled")
             .define("hudEnabled", true);
 
     public static final ModConfigSpec.EnumValue<TextShadowStyle> TEXT_SHADOW = BUILDER
@@ -36,7 +46,18 @@ public class ClientConfig {
                     " SHADOW  — vanilla 1px drop shadow (cheap)",
                     " OUTLINE — black 4-direction outline (most readable, ~5x glyph draws)"
             )
+            .translation("hudglassescc.config.textShadow")
             .defineEnum("textShadow", TextShadowStyle.NONE);
+
+    public static final ModConfigSpec.EnumValue<HudFit> HUD_FIT = BUILDER
+            .comment(
+                    "How the HUD is scaled to the screen.",
+                    " FIT     — keep aspect ratio, centered, letterboxed (default)",
+                    " STRETCH — fill the whole screen, distorts if the ratio differs",
+                    " COVER   — keep aspect ratio, scaled up to cover the screen, crops overflow"
+            )
+            .translation("hudglassescc.config.hudFit")
+            .defineEnum("hudFit", HudFit.FIT);
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
