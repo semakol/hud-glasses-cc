@@ -21,6 +21,8 @@
   "hudglassescc.config.hudEnabled.tooltip": "Рисуется ли HUD-оверлей. Также переключается клавишей.",
   "hudglassescc.config.textShadow": "Тень текста",
   "hudglassescc.config.textShadow.tooltip": "Тень/обводка текста HUD. NONE / SHADOW / OUTLINE (экспериментально).",
+  "hudglassescc.config.textShadowLayer": "Слой тени",
+  "hudglassescc.config.textShadowLayer.tooltip": "Где тень/обводка: OVER_BACKGROUND (фон -> тень -> текст) или UNDER_BACKGROUND (тень -> фон -> текст). Важно только при SHADOW/OUTLINE.",
   "hudglassescc.config.hudFit": "Вписывание в экран",
   "hudglassescc.config.hudFit.tooltip": "FIT — пропорции, STRETCH — на весь экран, COVER — заполнить с обрезкой.",
   "hudglassescc.config.hudWidth": "Ширина HUD",

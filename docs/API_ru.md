@@ -21,6 +21,7 @@ if not hud then error("HUD modem not found on the network") end
 | [Запись текста](#запись-текста)        | `write`, `blit`, `clear`, `clearLine`, `scroll` |
 | [Курсор](#курсор)                       | `getCursorPos`, `setCursorPos`, `getCursorBlink`, `setCursorBlink` |
 | [Размер](#размер)                       | `getSize`, `setSize`, `setWidth`, `setHeight`, `resetSize` |
+| [Перекрытие настроек](#перекрытие-настроек-отображения) | `getTextShadow`, `setTextShadow`, `getHudFit`, `setHudFit`, `getShadowLayer`, `setShadowLayer` |
 | [Цвета пера](#цвета-пера)               | `getTextColour`, `setTextColour`, `getBackgroundColour`, `setBackgroundColour`, `isColour` |
 | [Палитра](#палитра)                     | `getPaletteColour`, `setPaletteColour` |
 | [Привязка / идентификация](#привязка--идентификация) | `getId`, `getOwner`, `getOwners`, `getOwnerCount` |
@@ -152,6 +153,59 @@ hud.setSize(60, 20)
 
 Снимает «кастомный» флаг и возвращает размер к текущим значениям
 `hudWidth`/`hudHeight` из конфига. Содержимое очищается.
+
+---
+
+## Перекрытие настроек отображения
+
+Позволяют **компьютеру** принудительно задать клиентскую настройку отображения для
+всех, кто носит привязанные к этому модему очки — удобно для диспетчерской, где нужен
+единый вид. Каждый сеттер также принимает `"auto"`, что возвращает управление
+собственному клиентскому конфигу зрителя. **`"auto"` — значение по умолчанию для всех
+трёх.**
+
+Перекрытия задаются **на каждый модем**, сохраняются при перезапуске (как `setSize`) и
+**никогда не меняют конфиг-файл игрока** — они действуют только пока игрок смотрит на
+этот модем. Снял очки (или привязал другой модем) — перекрытие сбрасывается.
+
+> Выбор зрителя в **Mods → CC: HUD Glasses → Config** — это запасной вариант;
+> перекрытие здесь имеет приоритет, пока не вернёшь `"auto"`.
+
+### `setTextShadow(style)`
+
+Принудительно задаёт стиль тени текста. `style` (без учёта регистра): `"auto"`,
+`"none"`, `"shadow"`, `"outline"`. **Бросает** `LuaException` на любом другом значении.
+
+### `getTextShadow() → style`
+
+Возвращает текущее перекрытие строкой — `"auto"`, если не задано.
+
+### `setHudFit(fit)`
+
+Задаёт, как сетка масштабируется на экран. `fit`: `"auto"`, `"fit"`, `"stretch"`,
+`"cover"` (что делает каждый — см. [Размер](#размер)). Иначе **бросает**.
+
+### `getHudFit() → fit`
+
+Возвращает текущее перекрытие вписывания — `"auto"`, если не задано.
+
+### `setShadowLayer(layer)`
+
+Задаёт, где тень/обводка относительно фона клеток. `layer`: `"auto"`, `"over"`
+(фон → тень → текст) или `"under"` (тень → фон → текст). Видно только когда стиль тени
+`shadow`/`outline`. **Алиасы:** `setTextShadowLayer`. Иначе **бросает**.
+
+### `getShadowLayer() → layer`
+
+Возвращает `"auto"`, `"over"` или `"under"`. **Алиасы:** `getTextShadowLayer`.
+
+```lua
+local hud = peripheral.find("hud_glasses")
+hud.setHudFit("stretch")      -- все зрители видят растянутым...
+hud.setTextShadow("outline")  -- ...с обводкой...
+hud.setShadowLayer("under")   -- ...нарисованной под фоном клеток.
+hud.setHudFit("auto")         -- вернуть вписывание собственной настройке зрителя
+```
 
 ---
 
@@ -393,10 +447,12 @@ end
 | Масштаб | `setTextScale(s)` (пиксели) | `setSize(w, h)` (клетки) |
 | Размер | через `setTextScale` + множители блоков | `setSize` + дефолты из конфига |
 | Поведение при offline | n/a (блок всегда «есть») | копит буфер, доставит когда сможет |
-| Доп. методы | — | `getId`, `getOwners`, `setSize`, `resetSize` |
+| Доп. методы | — | `getId`, `getOwners`, `setSize`, `resetSize`, `setHudFit`, `setTextShadow`, `setShadowLayer` |
 
 `setTextScale` / `getTextScale` **не реализованы** — у HUD нет понятия
 пиксельного шага, размер задаётся через `setSize`.
 
 Справочник по кодировке символов (CC-шрифт в стиле CP437, адресуется по байту):
 [CHARS.md](CHARS.md).
+
+![img.png](img.png)

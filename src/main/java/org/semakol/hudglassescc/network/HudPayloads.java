@@ -19,5 +19,10 @@ public final class HudPayloads {
                 HudClearPayload.STREAM_CODEC,
                 ClientPayloadHandler::handleHudClear
         );
+        registrar.playToClient(
+                HudSettingsPayload.TYPE,
+                HudSettingsPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleHudSettings
+        );
     }
 }

@@ -9,8 +9,11 @@ import dan200.computercraft.api.peripheral.IPeripheral;
 import org.jetbrains.annotations.Nullable;
 import org.semakol.hudglassescc.block.entity.HudModemBlockEntity;
 import org.semakol.hudglassescc.hud.HudBuffer;
+import org.semakol.hudglassescc.hud.HudDisplay;
+import org.semakol.hudglassescc.network.HudSettingsPayload;
 
 import java.nio.ByteBuffer;
+import java.util.Locale;
 
 /**
  * CC peripheral exposing a CC:Tweaked-compatible terminal API on top of a
@@ -226,5 +229,80 @@ public class HudPeripheral implements IPeripheral {
     @LuaFunction
     public final int getOwnerCount() {
         return be.getCurrentViewers().size();
+    }
+
+    // ---- Display overrides ----
+    //
+    // Force a client display setting for everyone wearing glasses bound to this
+    // modem, or "auto" to let each viewer's own client config decide. These never
+    // touch the player's config file — they're a per-modem, runtime override.
+
+    @LuaFunction
+    public final void setTextShadow(String value) throws LuaException {
+        be.setOverrideTextShadow(parseTextShadow(value));
+    }
+
+    @LuaFunction
+    public final String getTextShadow() {
+        return enumName(HudDisplay.TextShadowStyle.values(), be.getOverrideTextShadow());
+    }
+
+    @LuaFunction
+    public final void setHudFit(String value) throws LuaException {
+        be.setOverrideHudFit(parseHudFit(value));
+    }
+
+    @LuaFunction
+    public final String getHudFit() {
+        return enumName(HudDisplay.HudFit.values(), be.getOverrideHudFit());
+    }
+
+    @LuaFunction({"setShadowLayer", "setTextShadowLayer"})
+    public final void setShadowLayer(String value) throws LuaException {
+        be.setOverrideShadowLayer(parseShadowLayer(value));
+    }
+
+    @LuaFunction({"getShadowLayer", "getTextShadowLayer"})
+    public final String getShadowLayer() {
+        byte b = be.getOverrideShadowLayer();
+        if (b == HudDisplay.ShadowLayer.OVER_BACKGROUND.ordinal()) return "over";
+        if (b == HudDisplay.ShadowLayer.UNDER_BACKGROUND.ordinal()) return "under";
+        return "auto";
+    }
+
+    private static String norm(String s) {
+        return s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
+    }
+
+    /** Friendly lowercase name for an override byte, or "auto" for AUTO / out of range. */
+    private static <E extends Enum<E>> String enumName(E[] values, byte b) {
+        return (b < 0 || b >= values.length) ? "auto" : values[b].name().toLowerCase(Locale.ROOT);
+    }
+
+    private static int parseTextShadow(String s) throws LuaException {
+        String v = norm(s);
+        if (v.equals("auto")) return HudSettingsPayload.AUTO;
+        for (HudDisplay.TextShadowStyle t : HudDisplay.TextShadowStyle.values()) {
+            if (t.name().toLowerCase(Locale.ROOT).equals(v)) return t.ordinal();
+        }
+        throw new LuaException("Expected one of: auto, none, shadow, outline");
+    }
+
+    private static int parseHudFit(String s) throws LuaException {
+        String v = norm(s);
+        if (v.equals("auto")) return HudSettingsPayload.AUTO;
+        for (HudDisplay.HudFit t : HudDisplay.HudFit.values()) {
+            if (t.name().toLowerCase(Locale.ROOT).equals(v)) return t.ordinal();
+        }
+        throw new LuaException("Expected one of: auto, fit, stretch, cover");
+    }
+
+    private static int parseShadowLayer(String s) throws LuaException {
+        return switch (norm(s)) {
+            case "auto" -> HudSettingsPayload.AUTO;
+            case "over", "over_background" -> HudDisplay.ShadowLayer.OVER_BACKGROUND.ordinal();
+            case "under", "under_background" -> HudDisplay.ShadowLayer.UNDER_BACKGROUND.ordinal();
+            default -> throw new LuaException("Expected one of: auto, over, under");
+        };
     }
 }

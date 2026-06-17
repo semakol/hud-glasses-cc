@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.2-beta
+
+- Computers can now override a viewer's display settings per modem from Lua:
+  `setTextShadow`, `setHudFit`, `setShadowLayer` (plus getters). Each accepts
+  `"auto"` (the default), which defers to the player's own config. Overrides apply
+  to everyone wearing glasses bound to the modem, persist with the modem, and
+  never modify any player's config file.
+- New client setting "Shadow layer" (`textShadowLayer`): choose whether the text
+  shadow/outline is drawn `OVER_BACKGROUND` (default) or `UNDER_BACKGROUND` — under
+  the cell backgrounds, so it only shows where it bleeds past an opaque cell.
+
 ## 0.1.1-beta
 
 - Modem can now be placed on any block face (floor, wall, ceiling) — it orients

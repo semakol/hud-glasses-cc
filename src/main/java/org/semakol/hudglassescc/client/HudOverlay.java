@@ -16,6 +16,7 @@ import org.semakol.hudglassescc.ClientConfig;
 import org.semakol.hudglassescc.Hudglassescc;
 import org.semakol.hudglassescc.compat.CuriosCompat;
 import org.semakol.hudglassescc.hud.CharMap;
+import org.semakol.hudglassescc.hud.HudDisplay;
 import org.semakol.hudglassescc.hud.HudPalette;
 import org.semakol.hudglassescc.network.HudUpdatePayload;
 
@@ -66,7 +67,10 @@ public final class HudOverlay {
         float ratioX = (float) screenW / bufferPxW;
         float ratioY = (float) screenH / bufferPxH;
         float scaleX, scaleY, xOff, yOff;
-        switch (ClientConfig.HUD_FIT.get()) {
+        // A modem override (if any) wins; otherwise use the viewer's own config.
+        HudDisplay.HudFit fitOverride = ClientHudState.fitOverride();
+        HudDisplay.HudFit fit = fitOverride != null ? fitOverride : ClientConfig.HUD_FIT.get();
+        switch (fit) {
             case STRETCH -> {
                 // Fill the whole screen; X and Y scale independently (may distort).
                 scaleX = ratioX;
@@ -99,15 +103,61 @@ public final class HudOverlay {
         String[] fgColors = data.fgColors();
         String[] bgColors = data.bgColors();
 
+        // Modem overrides win over the viewer's config for shadow style and layer too.
+        HudDisplay.TextShadowStyle shadowOverride = ClientHudState.shadowOverride();
+        HudDisplay.TextShadowStyle shadowStyle = shadowOverride != null
+                ? shadowOverride : ClientConfig.TEXT_SHADOW.get();
+        boolean drawShadow = shadowStyle == HudDisplay.TextShadowStyle.SHADOW;
+        boolean drawOutline = shadowStyle == HudDisplay.TextShadowStyle.OUTLINE;
+        boolean hasDecoration = drawShadow || drawOutline;
+        HudDisplay.ShadowLayer layerOverride = ClientHudState.layerOverride();
+        HudDisplay.ShadowLayer shadowLayer = layerOverride != null
+                ? layerOverride : ClientConfig.TEXT_SHADOW_LAYER.get();
+        boolean shadowUnder = hasDecoration
+                && shadowLayer == HudDisplay.ShadowLayer.UNDER_BACKGROUND;
+
         PoseStack pose = g.pose();
         pose.pushPose();
         pose.translate(xOff, yOff, 0);
         pose.scale(scaleX, scaleY, 1f);
 
-        // Pass 1: bg fills, runs of same colour per row.
-        // g.fill writes to the gui RenderType buffer with flushIfUnmanaged() —
-        // inside a managed gui-layer rendering pass this never forces a flush,
-        // so all rectangles batch into a single draw call.
+        Matrix4f matrix = pose.last().pose();
+        MultiBufferSource.BufferSource buffers = g.bufferSource();
+
+        if (shadowUnder) {
+            // shadow -> background -> text. The shadow/outline lives in the text
+            // render type, which always flushes *after* the gui-fill render type
+            // within one batch — so to put it *under* the backgrounds it has to
+            // reach the framebuffer in its own earlier flush.
+            drawGlyphs(font, matrix, buffers, lines, fgColors, palette, width, height,
+                    true, false, drawOutline);
+            buffers.endBatch();
+
+            drawBackgrounds(g, palette, bgColors, width, height);
+            drawGlyphs(font, matrix, buffers, lines, fgColors, palette, width, height,
+                    false, true, drawOutline);
+            buffers.endBatch();
+        } else {
+            // background -> shadow -> text (default). One batch: fills flush first
+            // (gui render type), then decoration + main glyphs (text render type).
+            drawBackgrounds(g, palette, bgColors, width, height);
+            drawGlyphs(font, matrix, buffers, lines, fgColors, palette, width, height,
+                    hasDecoration, true, drawOutline);
+            buffers.endBatch();
+        }
+
+        pose.popPose();
+    }
+
+    /**
+     * Background fills, runs of same colour per row.
+     *
+     * <p>{@code g.fill} writes to the gui RenderType buffer with
+     * {@code flushIfUnmanaged()} — inside a managed gui-layer rendering pass this
+     * never forces a flush, so all rectangles batch into a single draw call.
+     */
+    private static void drawBackgrounds(GuiGraphics g, int[] palette, String[] bgColors,
+                                        int width, int height) {
         for (int y = 0; y < height; y++) {
             String bgLine = bgColors[y];
             int py = y * CELL_H;
@@ -128,22 +178,27 @@ public final class HudOverlay {
                 g.fill(runStart * CELL_W, py, width * CELL_W, py + CELL_H, rgb);
             }
         }
+    }
 
-        // Pass 2: fg glyphs via direct Font.drawInBatch.
-        //
-        // Crucial: GuiGraphics.drawString calls flushIfManaged() after EVERY
-        // call, which turns each glyph into a synchronous GPU sync point.
-        // For an 80x28 buffer in OUTLINE mode that's ~11k sync points/frame.
-        // Bypassing GuiGraphics and writing straight to the shared BufferSource
-        // batches all 2240 (or 5x in outline) glyphs into a single GPU draw
-        // call when the gui layer flushes at the end.
-        ClientConfig.TextShadowStyle shadowStyle = ClientConfig.TEXT_SHADOW.get();
-        boolean drawShadow = shadowStyle == ClientConfig.TextShadowStyle.SHADOW;
-        boolean drawOutline = shadowStyle == ClientConfig.TextShadowStyle.OUTLINE;
-        Matrix4f matrix = pose.last().pose();
-        MultiBufferSource.BufferSource buffers = g.bufferSource();
+    /**
+     * fg glyphs via direct {@link Font#drawInBatch}.
+     *
+     * <p>Crucial: {@code GuiGraphics.drawString} calls {@code flushIfManaged()}
+     * after EVERY call, which turns each glyph into a synchronous GPU sync point.
+     * For an 80x28 buffer in OUTLINE mode that's ~11k sync points/frame. Bypassing
+     * GuiGraphics and writing straight to the shared BufferSource batches all the
+     * glyphs into a single GPU draw call when the batch flushes.
+     *
+     * @param decoration draw the shadow/outline copies (the {@code outline} flag
+     *                   picks which: a 4-direction black outline, else a single
+     *                   darkened drop-shadow copy)
+     * @param main       draw the main glyph in its fg colour on top
+     */
+    private static void drawGlyphs(Font font, Matrix4f matrix, MultiBufferSource.BufferSource buffers,
+                                   String[] lines, String[] fgColors, int[] palette,
+                                   int width, int height,
+                                   boolean decoration, boolean main, boolean outline) {
         Font.DisplayMode mode = Font.DisplayMode.NORMAL;
-
         for (int y = 0; y < height; y++) {
             String line = lines[y];
             String fgLine = fgColors[y];
@@ -156,25 +211,23 @@ public final class HudOverlay {
                 FormattedCharSequence seq = glyphSequence(c);
                 int rgb = 0xFF000000 | (palette[fgIdx] & 0xFFFFFF);
                 int px = x * CELL_W;
-                if (drawOutline) {
-                    font.drawInBatch(seq, px - 1, py,     OUTLINE_RGB, false, matrix, buffers, mode, 0, PACKED_LIGHT);
-                    font.drawInBatch(seq, px + 1, py,     OUTLINE_RGB, false, matrix, buffers, mode, 0, PACKED_LIGHT);
-                    font.drawInBatch(seq, px,     py - 1, OUTLINE_RGB, false, matrix, buffers, mode, 0, PACKED_LIGHT);
-                    font.drawInBatch(seq, px,     py + 1, OUTLINE_RGB, false, matrix, buffers, mode, 0, PACKED_LIGHT);
-                    font.drawInBatch(seq, px,     py,     rgb,         false, matrix, buffers, mode, 0, PACKED_LIGHT);
-                } else {
-                    font.drawInBatch(seq, px, py, rgb, drawShadow, matrix, buffers, mode, 0, PACKED_LIGHT);
+                if (decoration) {
+                    if (outline) {
+                        font.drawInBatch(seq, px - 1, py,     OUTLINE_RGB, false, matrix, buffers, mode, 0, PACKED_LIGHT);
+                        font.drawInBatch(seq, px + 1, py,     OUTLINE_RGB, false, matrix, buffers, mode, 0, PACKED_LIGHT);
+                        font.drawInBatch(seq, px,     py - 1, OUTLINE_RGB, false, matrix, buffers, mode, 0, PACKED_LIGHT);
+                        font.drawInBatch(seq, px,     py + 1, OUTLINE_RGB, false, matrix, buffers, mode, 0, PACKED_LIGHT);
+                    } else {
+                        // Vanilla drop-shadow colour: each component * 0.25, alpha kept.
+                        int shadowRgb = (rgb & 0xFCFCFC) >> 2 | (rgb & 0xFF000000);
+                        font.drawInBatch(seq, px + 1, py + 1, shadowRgb, false, matrix, buffers, mode, 0, PACKED_LIGHT);
+                    }
+                }
+                if (main) {
+                    font.drawInBatch(seq, px, py, rgb, false, matrix, buffers, mode, 0, PACKED_LIGHT);
                 }
             }
         }
-
-        // Single flush at the end of the layer. Without this the queued text
-        // vertices never reach the GPU because we bypassed GuiGraphics.drawString
-        // (which would normally call flushIfManaged() after each glyph).
-        // One flush per frame keeps the perf win from batching.
-        buffers.endBatch();
-
-        pose.popPose();
     }
 
     private static FormattedCharSequence glyphSequence(char c) {

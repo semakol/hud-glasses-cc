@@ -21,6 +21,8 @@
   "hudglassescc.config.hudEnabled.tooltip": "Whether the HUD overlay is rendered. Also toggled with the keybind.",
   "hudglassescc.config.textShadow": "Text shadow",
   "hudglassescc.config.textShadow.tooltip": "Shadow/outline behind HUD text. NONE / SHADOW / OUTLINE (experimental).",
+  "hudglassescc.config.textShadowLayer": "Shadow layer",
+  "hudglassescc.config.textShadowLayer.tooltip": "Where the shadow/outline sits: OVER_BACKGROUND (bg -> shadow -> text) or UNDER_BACKGROUND (shadow -> bg -> text). Only matters with SHADOW/OUTLINE.",
   "hudglassescc.config.hudFit": "Screen fit",
   "hudglassescc.config.hudFit.tooltip": "FIT keeps aspect ratio, STRETCH fills the screen, COVER crops to cover it.",
   "hudglassescc.config.hudWidth": "HUD width",

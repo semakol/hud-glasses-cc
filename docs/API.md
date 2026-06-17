@@ -21,6 +21,7 @@ script almost always runs on the HUD unchanged.
 | [Writing text](#writing-text)          | `write`, `blit`, `clear`, `clearLine`, `scroll` |
 | [Cursor](#cursor)                      | `getCursorPos`, `setCursorPos`, `getCursorBlink`, `setCursorBlink` |
 | [Size](#size)                          | `getSize`, `setSize`, `setWidth`, `setHeight`, `resetSize` |
+| [Display overrides](#display-overrides) | `getTextShadow`, `setTextShadow`, `getHudFit`, `setHudFit`, `getShadowLayer`, `setShadowLayer` |
 | [Pen colours](#pen-colours)            | `getTextColour`, `setTextColour`, `getBackgroundColour`, `setBackgroundColour`, `isColour` |
 | [Palette](#palette)                    | `getPaletteColour`, `setPaletteColour` |
 | [Binding / identity](#binding--identity) | `getId`, `getOwner`, `getOwners`, `getOwnerCount` |
@@ -150,6 +151,59 @@ Convenience: change one axis, leave the other as is. Same bounds.
 
 Drops the "custom" flag and reverts to the current `hudWidth`/`hudHeight` config
 values. Contents are cleared.
+
+---
+
+## Display overrides
+
+These let the **computer** force a viewer-side display setting for everyone wearing
+glasses bound to this modem — handy for a control room that wants one consistent look.
+Every setter also accepts `"auto"`, which hands control back to the viewer's own client
+config. **`"auto"` is the default for all three.**
+
+Overrides are **per-modem**, persist across restarts (like `setSize`), and **never
+modify any player's config file** — they apply only while a player is watching this
+modem. Unbinding the glasses (or binding a different modem) drops the override.
+
+> The viewer's choice in **Mods → CC: HUD Glasses → Config** is the fallback; an
+> override here takes precedence until set back to `"auto"`.
+
+### `setTextShadow(style)`
+
+Forces the text-shadow style. `style` (case-insensitive): `"auto"`, `"none"`,
+`"shadow"`, `"outline"`. **Throws** `LuaException` on any other value.
+
+### `getTextShadow() → style`
+
+Returns the current override as a string — `"auto"` when not overridden.
+
+### `setHudFit(fit)`
+
+Forces how the grid is scaled to the screen. `fit`: `"auto"`, `"fit"`, `"stretch"`,
+`"cover"` (see [Size](#size) for what each does). **Throws** otherwise.
+
+### `getHudFit() → fit`
+
+Returns the current fit override — `"auto"` when not overridden.
+
+### `setShadowLayer(layer)`
+
+Forces where the shadow/outline sits relative to the cell backgrounds. `layer`:
+`"auto"`, `"over"` (background → shadow → text) or `"under"` (shadow → background →
+text). Only visible when the shadow style is `shadow`/`outline`. **Aliases:**
+`setTextShadowLayer`. **Throws** otherwise.
+
+### `getShadowLayer() → layer`
+
+Returns `"auto"`, `"over"`, or `"under"`. **Aliases:** `getTextShadowLayer`.
+
+```lua
+local hud = peripheral.find("hud_glasses")
+hud.setHudFit("stretch")      -- everyone watching sees it stretched...
+hud.setTextShadow("outline")  -- ...with an outline...
+hud.setShadowLayer("under")   -- ...drawn behind the cell backgrounds.
+hud.setHudFit("auto")         -- hand fit back to each viewer's own setting
+```
 
 ---
 
@@ -392,10 +446,12 @@ end
 | Scale | `setTextScale(s)` (pixels) | `setSize(w, h)` (cells) |
 | Size | via `setTextScale` + block multiples | `setSize` + config defaults |
 | Offline behaviour | n/a (the block always exists) | buffer accumulates, delivered when possible |
-| Extra methods | — | `getId`, `getOwners`, `setSize`, `resetSize` |
+| Extra methods | — | `getId`, `getOwners`, `setSize`, `resetSize`, `setHudFit`, `setTextShadow`, `setShadowLayer` |
 
 `setTextScale` / `getTextScale` are **not implemented** — the HUD has no pixel
 step; size is set with `setSize`.
 
 See [CHARS.md](CHARS.md) for the character-encoding reference (the CC font is a
 CP437-style set, addressed by byte value).
+
+![img.png](img.png)

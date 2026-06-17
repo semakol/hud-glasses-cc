@@ -38,7 +38,7 @@ public final class HudManager {
     private static volatile boolean resizePending = false;
 
     /** What we last delivered to each player, so we only resend on change. Main thread. */
-    private record Delivery(int modemId, long version) {}
+    private record Delivery(int modemId, long version, long settingsVersion) {}
     private static final Map<UUID, Delivery> LAST = new HashMap<>();
 
     private HudManager() {}
@@ -131,10 +131,19 @@ public final class HudManager {
 
             HudBuffer buf = be.getBuffer();
             long ver = buf.getVersion();
+            long sver = be.getSettingsVersion();
             Delivery prev = LAST.get(uuid);
-            if (prev == null || prev.modemId() != binding.modemId() || prev.version() != ver) {
+            boolean modemChanged = prev == null || prev.modemId() != binding.modemId();
+            boolean bufChanged = modemChanged || prev.version() != ver;
+            boolean settingsChanged = modemChanged || prev.settingsVersion() != sver;
+            if (bufChanged) {
                 PacketDistributor.sendToPlayer(player, buf.toPayload());
-                LAST.put(uuid, new Delivery(binding.modemId(), ver));
+            }
+            if (settingsChanged) {
+                PacketDistributor.sendToPlayer(player, be.buildSettingsPayload());
+            }
+            if (bufChanged || settingsChanged) {
+                LAST.put(uuid, new Delivery(binding.modemId(), ver, sver));
             }
         }
 

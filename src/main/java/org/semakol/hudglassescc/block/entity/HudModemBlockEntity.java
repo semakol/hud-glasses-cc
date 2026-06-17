@@ -11,9 +11,11 @@ import org.semakol.hudglassescc.Hudglassescc;
 import org.semakol.hudglassescc.hud.HudBuffer;
 import org.semakol.hudglassescc.hud.HudManager;
 import org.semakol.hudglassescc.hud.HudModemIdRegistry;
+import org.semakol.hudglassescc.network.HudSettingsPayload;
 import org.semakol.hudglassescc.peripheral.HudPeripheral;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Modem owns the terminal {@link HudBuffer}. Binding lives entirely on the
@@ -42,6 +44,17 @@ public class HudModemBlockEntity extends BlockEntity {
     private volatile boolean persistPending = false;
     /** Names of players currently viewing this modem. Published from the main thread tick. */
     private volatile List<String> currentViewers = List.of();
+
+    /**
+     * Per-modem display overrides: enum ordinal, or {@link HudSettingsPayload#AUTO}
+     * ({@code -1}) meaning "defer to each viewer's client config". Written from the
+     * peripheral (computer) thread, read on the main thread for delivery.
+     */
+    private volatile byte ovTextShadow = HudSettingsPayload.AUTO;
+    private volatile byte ovHudFit = HudSettingsPayload.AUTO;
+    private volatile byte ovShadowLayer = HudSettingsPayload.AUTO;
+    /** Bumped on any override change so {@link HudManager} only re-sends on change. */
+    private final AtomicLong settingsVersion = new AtomicLong(1);
 
     public HudModemBlockEntity(BlockPos pos, BlockState state) {
         super(Hudglassescc.HUD_MODEM_BE.get(), pos, state);
@@ -101,12 +114,49 @@ public class HudModemBlockEntity extends BlockEntity {
         persistPending = true;
     }
 
-    /** Main-thread only: persist a deferred resize. Called from {@link HudManager#tick}. */
+    /** Main-thread only: persist a deferred resize/override change. Called from {@link HudManager#tick}. */
     public void flushPersistIfNeeded() {
         if (persistPending) {
             persistPending = false;
             setChanged();
         }
+    }
+
+    // ---- Display overrides (peripheral thread writes; main thread reads for delivery) ----
+
+    public byte getOverrideTextShadow() { return ovTextShadow; }
+    public byte getOverrideHudFit() { return ovHudFit; }
+    public byte getOverrideShadowLayer() { return ovShadowLayer; }
+
+    /** @param ordinal {@code HudDisplay.TextShadowStyle} ordinal, or {@code -1} for AUTO. */
+    public void setOverrideTextShadow(int ordinal) {
+        byte v = (byte) ordinal;
+        if (ovTextShadow != v) { ovTextShadow = v; onSettingsChanged(); }
+    }
+
+    /** @param ordinal {@code HudDisplay.HudFit} ordinal, or {@code -1} for AUTO. */
+    public void setOverrideHudFit(int ordinal) {
+        byte v = (byte) ordinal;
+        if (ovHudFit != v) { ovHudFit = v; onSettingsChanged(); }
+    }
+
+    /** @param ordinal {@code HudDisplay.ShadowLayer} ordinal, or {@code -1} for AUTO. */
+    public void setOverrideShadowLayer(int ordinal) {
+        byte v = (byte) ordinal;
+        if (ovShadowLayer != v) { ovShadowLayer = v; onSettingsChanged(); }
+    }
+
+    private void onSettingsChanged() {
+        settingsVersion.incrementAndGet();
+        persistPending = true;
+    }
+
+    /** Current override version — changes whenever any override is set. */
+    public long getSettingsVersion() { return settingsVersion.get(); }
+
+    /** Snapshot of the three overrides for delivery (main thread). */
+    public HudSettingsPayload buildSettingsPayload() {
+        return new HudSettingsPayload(ovTextShadow, ovHudFit, ovShadowLayer);
     }
 
     public HudPeripheral getPeripheral() {
@@ -155,6 +205,9 @@ public class HudModemBlockEntity extends BlockEntity {
                 buffer = new HudBuffer(w, h);
             }
         }
+        ovTextShadow = tag.contains("OvTextShadow") ? tag.getByte("OvTextShadow") : HudSettingsPayload.AUTO;
+        ovHudFit = tag.contains("OvHudFit") ? tag.getByte("OvHudFit") : HudSettingsPayload.AUTO;
+        ovShadowLayer = tag.contains("OvShadowLayer") ? tag.getByte("OvShadowLayer") : HudSettingsPayload.AUTO;
     }
 
     @Override
@@ -167,5 +220,8 @@ public class HudModemBlockEntity extends BlockEntity {
             tag.putInt("BufferW", b.width);
             tag.putInt("BufferH", b.height);
         }
+        if (ovTextShadow != HudSettingsPayload.AUTO) tag.putByte("OvTextShadow", ovTextShadow);
+        if (ovHudFit != HudSettingsPayload.AUTO) tag.putByte("OvHudFit", ovHudFit);
+        if (ovShadowLayer != HudSettingsPayload.AUTO) tag.putByte("OvShadowLayer", ovShadowLayer);
     }
 }

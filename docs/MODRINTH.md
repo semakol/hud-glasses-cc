@@ -37,6 +37,12 @@ If you've ever written a monitor program, you already know this peripheral.
 - Runtime resolution — setSize(w, h) from Lua, or set defaults in the config.
   Fewer cells means bigger text. Choose how the grid maps to the screen: FIT
   (keep aspect, letterbox), STRETCH (fill the screen), or COVER (fill + crop).
+- Readable text — optional drop shadow or black outline behind glyphs, drawn over
+  or under the cell backgrounds.
+- Computer-driven display — a computer can force the text shadow, screen fit and
+  shadow layer for everyone watching a modem (setTextShadow / setHudFit /
+  setShadowLayer), or leave them on "auto" so each viewer's own setting wins. It
+  never edits anyone's config file.
 - Shared screens — bind several glasses to one modem and everyone sees the same
   display. Good for team status boards, base alarms, and shared coordinates.
 - Place anywhere — the modem mounts on any block face (floor, wall, ceiling),
@@ -78,6 +84,11 @@ Client (hudglassescc-client.toml, per-player):
   letterbox), STRETCH (fill, may distort), COVER (fill, crops overflow)
 - textShadow (default NONE) — text shadow style: NONE / SHADOW / OUTLINE
   (experimental)
+- textShadowLayer (default OVER_BACKGROUND) — draw the shadow/outline over or under
+  the cell backgrounds (experimental)
+
+A bound modem can override hudFit, textShadow and textShadowLayer for its viewers
+from Lua; "auto" (the default) leaves each value to the player's own setting above.
 
 ## Status
 

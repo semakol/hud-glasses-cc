@@ -25,6 +25,8 @@ binding stay correct when the modem rides inside a flying sub-level.
   Aeronautics sub-level (bundled Sable Companion)
 - 📡 **Optional range limit** — configurable, unlimited by default
 - 🌫️ **Transparent background** — `setBackgroundColour(0)` or `-` in `blit`
+- 🎛️ **Computer-driven display** — a modem can force the text shadow, screen fit and
+  shadow layer for its viewers from Lua, or `"auto"` to use each player's own config
 - 🎨 **Pixel-perfect CC font** — reuses CC:Tweaked's own glyph set (all 256 chars)
 - ⚡ **Low overhead** — server-side payload cache, batched background fills and a
   single-draw glyph batch on the client
@@ -114,9 +116,15 @@ Client config (`config/hudglassescc-client.toml`, per-player):
 | `hudEnabled` | true | Whether the HUD renders. Toggle with the **H** key. |
 | `hudFit` | FIT | How the HUD scales to the screen — see [Screen resolution](#screen-resolution). |
 | `textShadow` | NONE | Text shadow style: `NONE` / `SHADOW` / `OUTLINE`. *(experimental)* |
+| `textShadowLayer` | OVER_BACKGROUND | Shadow vs. cell backgrounds: `OVER_BACKGROUND` (bg → shadow → text) or `UNDER_BACKGROUND` (shadow → bg → text). *(experimental)* |
 
 Edit these from **Mods → CC: HUD Glasses → Config**, or bind a key to "Open
 settings" to jump straight to the client section.
+
+A bound modem can also **override** `textShadow`, `hudFit` and `textShadowLayer` for
+its viewers from Lua (`setTextShadow` / `setHudFit` / `setShadowLayer`) without touching
+anyone's config file; `"auto"` (the default) leaves each value to the player's own
+settings above. See [Display overrides](docs/API.md).
 
 ### Screen resolution
 
