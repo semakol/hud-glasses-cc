@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.semakol.hudglassescc.Hudglassescc;
 import org.semakol.hudglassescc.block.entity.HudModemBlockEntity;
 import org.semakol.hudglassescc.compat.CuriosCompat;
-import org.semakol.hudglassescc.item.BoundModemData;
+import org.semakol.hudglassescc.hud.HudBinding;
 
 import java.util.List;
 
@@ -121,7 +121,7 @@ public class HudModemBlock extends BaseEntityBlock {
         if (!(level.getBlockEntity(pos) instanceof HudModemBlockEntity be)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        toggleBinding(player, stack, be.getModemId());
+        HudBinding.toggle(player, stack, be.getModemId());
         return ItemInteractionResult.sidedSuccess(false);
     }
 
@@ -134,7 +134,7 @@ public class HudModemBlock extends BaseEntityBlock {
         // bind/unbind the worn pair without taking them off.
         ItemStack worn = CuriosCompat.getWornHudStack(player);
         if (worn.is(Hudglassescc.HUD_GLASSES.get())) {
-            toggleBinding(player, worn, be.getModemId());
+            HudBinding.toggle(player, worn, be.getModemId());
             return InteractionResult.CONSUME;
         }
 
@@ -149,17 +149,5 @@ public class HudModemBlock extends BaseEntityBlock {
                             be.getModemId(), String.join(", ", viewers)), true);
         }
         return InteractionResult.CONSUME;
-    }
-
-    /** Toggles this modem's id on the given glasses stack (binding lives on the item). */
-    private static void toggleBinding(Player player, ItemStack glasses, int modemId) {
-        BoundModemData existing = glasses.get(Hudglassescc.BOUND_MODEM.get());
-        if (existing != null && existing.modemId() == modemId) {
-            glasses.remove(Hudglassescc.BOUND_MODEM.get());
-            player.displayClientMessage(Component.translatable("hudglassescc.modem.unbound"), true);
-        } else {
-            glasses.set(Hudglassescc.BOUND_MODEM.get(), new BoundModemData(modemId));
-            player.displayClientMessage(Component.translatable("hudglassescc.modem.bound", modemId), true);
-        }
     }
 }

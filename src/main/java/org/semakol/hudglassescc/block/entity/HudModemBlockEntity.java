@@ -4,13 +4,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.semakol.hudglassescc.Config;
 import org.semakol.hudglassescc.Hudglassescc;
 import org.semakol.hudglassescc.hud.HudBuffer;
 import org.semakol.hudglassescc.hud.HudManager;
 import org.semakol.hudglassescc.hud.HudModemIdRegistry;
+import org.semakol.hudglassescc.hud.HudSource;
 import org.semakol.hudglassescc.network.HudSettingsPayload;
 import org.semakol.hudglassescc.peripheral.HudPeripheral;
 
@@ -31,10 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * as an immutable snapshot from the main thread, and {@code setChanged} for a
  * Lua resize is deferred to the main thread via {@link #flushPersistIfNeeded}.
  */
-public class HudModemBlockEntity extends BlockEntity {
-    public static final int MIN_W = 4, MAX_W = 256;
-    public static final int MIN_H = 1, MAX_H = 128;
-
+public class HudModemBlockEntity extends BlockEntity implements HudSource {
     private HudPeripheral peripheral;
     private volatile HudBuffer buffer = new HudBuffer(Config.hudWidth, Config.hudHeight);
     private int modemId = -1;
@@ -75,14 +76,33 @@ public class HudModemBlockEntity extends BlockEntity {
         return modemId;
     }
 
+    @Override
+    public int getSourceId() {
+        return getModemId();
+    }
+
+    @Override
+    @Nullable
+    public Level getSourceLevel() {
+        return level;
+    }
+
+    @Override
+    public Vec3 getSourcePosition() {
+        return Vec3.atCenterOf(getBlockPos());
+    }
+
+    @Override
     public HudBuffer getBuffer() {
         return buffer;
     }
 
+    @Override
     public void replaceBuffer(HudBuffer newBuffer) {
         this.buffer = newBuffer;
     }
 
+    @Override
     public boolean hasCustomSize() {
         return customSize;
     }
@@ -93,9 +113,10 @@ public class HudModemBlockEntity extends BlockEntity {
      * born dirty, so the main-thread tick re-publishes it; persistence is deferred
      * to {@link #flushPersistIfNeeded}.
      */
+    @Override
     public void setBufferSize(int w, int h) {
-        w = Math.max(MIN_W, Math.min(MAX_W, w));
-        h = Math.max(MIN_H, Math.min(MAX_H, h));
+        w = Math.max(HudBuffer.MIN_W, Math.min(HudBuffer.MAX_W, w));
+        h = Math.max(HudBuffer.MIN_H, Math.min(HudBuffer.MAX_H, h));
         HudBuffer cur = buffer;
         if (customSize && cur.width == w && cur.height == h) return;
         buffer = new HudBuffer(w, h);
@@ -104,6 +125,7 @@ public class HudModemBlockEntity extends BlockEntity {
     }
 
     /** Drops the Lua override and reverts to current config defaults (peripheral thread). */
+    @Override
     public void resetBufferSize() {
         int w = Config.hudWidth;
         int h = Config.hudHeight;
@@ -115,6 +137,7 @@ public class HudModemBlockEntity extends BlockEntity {
     }
 
     /** Main-thread only: persist a deferred resize/override change. Called from {@link HudManager#tick}. */
+    @Override
     public void flushPersistIfNeeded() {
         if (persistPending) {
             persistPending = false;
@@ -124,23 +147,26 @@ public class HudModemBlockEntity extends BlockEntity {
 
     // ---- Display overrides (peripheral thread writes; main thread reads for delivery) ----
 
-    public byte getOverrideTextShadow() { return ovTextShadow; }
-    public byte getOverrideHudFit() { return ovHudFit; }
-    public byte getOverrideShadowLayer() { return ovShadowLayer; }
+    @Override public byte getOverrideTextShadow() { return ovTextShadow; }
+    @Override public byte getOverrideHudFit() { return ovHudFit; }
+    @Override public byte getOverrideShadowLayer() { return ovShadowLayer; }
 
     /** @param ordinal {@code HudDisplay.TextShadowStyle} ordinal, or {@code -1} for AUTO. */
+    @Override
     public void setOverrideTextShadow(int ordinal) {
         byte v = (byte) ordinal;
         if (ovTextShadow != v) { ovTextShadow = v; onSettingsChanged(); }
     }
 
     /** @param ordinal {@code HudDisplay.HudFit} ordinal, or {@code -1} for AUTO. */
+    @Override
     public void setOverrideHudFit(int ordinal) {
         byte v = (byte) ordinal;
         if (ovHudFit != v) { ovHudFit = v; onSettingsChanged(); }
     }
 
     /** @param ordinal {@code HudDisplay.ShadowLayer} ordinal, or {@code -1} for AUTO. */
+    @Override
     public void setOverrideShadowLayer(int ordinal) {
         byte v = (byte) ordinal;
         if (ovShadowLayer != v) { ovShadowLayer = v; onSettingsChanged(); }
@@ -152,9 +178,11 @@ public class HudModemBlockEntity extends BlockEntity {
     }
 
     /** Current override version — changes whenever any override is set. */
+    @Override
     public long getSettingsVersion() { return settingsVersion.get(); }
 
     /** Snapshot of the three overrides for delivery (main thread). */
+    @Override
     public HudSettingsPayload buildSettingsPayload() {
         return new HudSettingsPayload(ovTextShadow, ovHudFit, ovShadowLayer);
     }
@@ -165,11 +193,13 @@ public class HudModemBlockEntity extends BlockEntity {
     }
 
     /** Main thread: record who is currently viewing (immutable snapshot publish). */
+    @Override
     public void setCurrentViewers(List<String> viewers) {
         this.currentViewers = viewers.isEmpty() ? List.of() : List.copyOf(viewers);
     }
 
     /** Safe to read from the peripheral thread — an immutable snapshot. */
+    @Override
     public List<String> getCurrentViewers() {
         return currentViewers;
     }
@@ -199,8 +229,8 @@ public class HudModemBlockEntity extends BlockEntity {
         modemId = tag.contains("ModemId") ? tag.getInt("ModemId") : -1;
         customSize = tag.getBoolean("CustomSize");
         if (customSize && tag.contains("BufferW") && tag.contains("BufferH")) {
-            int w = Math.max(MIN_W, Math.min(MAX_W, tag.getInt("BufferW")));
-            int h = Math.max(MIN_H, Math.min(MAX_H, tag.getInt("BufferH")));
+            int w = Math.max(HudBuffer.MIN_W, Math.min(HudBuffer.MAX_W, tag.getInt("BufferW")));
+            int h = Math.max(HudBuffer.MIN_H, Math.min(HudBuffer.MAX_H, tag.getInt("BufferH")));
             if (buffer.width != w || buffer.height != h) {
                 buffer = new HudBuffer(w, h);
             }

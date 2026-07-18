@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.1.3-beta
+
+- **HUD on a pocket computer.** Craft `pocket computer + HUD Modem` to give it the HUD
+  upgrade — the same `hud_glasses` peripheral, but portable. Bind your **worn** glasses
+  to it with **sneak + right-click** (a plain right-click still opens the terminal).
+  Modem blocks and pocket computers share one id space, so switching sources is just
+  right-clicking whichever you want, and the glasses never come off.
+  The pocket's buffer size is per-session; its id persists.
+- **HUD + Ender Modem in one upgrade slot.** A pocket computer has only one slot, so a
+  HUD-only upgrade would leave it with no networking. Craft a **HUD Ender Modem**
+  (`HUD Modem + Ender Modem`) and fit it to a pocket computer for a peripheral that is both:
+  its primary type is `modem` (so `rednet.open("back")` works) with `hud_glasses` as an
+  additional type (so `peripheral.find("hud_glasses")` finds the same object). The modem
+  half is interdimensional and supports `open`/`isOpen`/`close`/`closeAll`/`transmit`/
+  `isWireless` plus `modem_message` events. Fitting it uses CC's own upgrade recipe, so
+  the computer's id and files are preserved; removing it returns the item.
+- New server config `allowPocketHudEnderCraft` (default `true`) — set `false` and the
+  HUD Ender Modem recipe is removed outright (gone from JEI, item unlisted). Pockets that
+  already have the upgrade keep working. Read at recipe load, so it needs a `/reload`.
+- Fixed `getBackgroundColour()` returning `0` when the background was transparent. `0`
+  isn't a valid CC colour, which broke term-compatible libraries (e.g. More Fonts) that
+  map the result through a colour table and got `nil`. It now reports `colors.black`;
+  `setBackgroundColour(0)` still sets transparency.
+
 ## 0.1.2-beta
 
 - Computers can now override a viewer's display settings per modem from Lua:

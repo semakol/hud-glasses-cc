@@ -26,11 +26,20 @@ public class Config {
             .translation("hudglassescc.config.maxRangeBlocks")
             .defineInRange("maxRangeBlocks", -1, -1, 100000);
 
+    private static final ModConfigSpec.BooleanValue ALLOW_POCKET_HUD_ENDER_CRAFT = BUILDER
+            .comment("Whether the HUD + Ender Modem pocket upgrade can be crafted",
+                    "(pocket computer + HUD Modem + Ender Modem).",
+                    "Set to false to disable that recipe on this server. Pocket computers that already",
+                    "have the upgrade keep working; only crafting new ones is blocked.")
+            .translation("hudglassescc.config.allowPocketHudEnderCraft")
+            .define("allowPocketHudEnderCraft", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int hudWidth = 80;
     public static int hudHeight = 28;
     public static int maxRangeBlocks = -1;
+    public static boolean allowPocketHudEnderCraft = true;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -38,6 +47,7 @@ public class Config {
         hudWidth = HUD_WIDTH.get();
         hudHeight = HUD_HEIGHT.get();
         maxRangeBlocks = MAX_RANGE.get();
+        allowPocketHudEnderCraft = ALLOW_POCKET_HUD_ENDER_CRAFT.get();
         HudManager.requestResize();
     }
 }

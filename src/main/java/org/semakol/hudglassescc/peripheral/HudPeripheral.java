@@ -7,9 +7,9 @@ import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import org.jetbrains.annotations.Nullable;
-import org.semakol.hudglassescc.block.entity.HudModemBlockEntity;
 import org.semakol.hudglassescc.hud.HudBuffer;
 import org.semakol.hudglassescc.hud.HudDisplay;
+import org.semakol.hudglassescc.hud.HudSource;
 import org.semakol.hudglassescc.network.HudSettingsPayload;
 
 import java.nio.ByteBuffer;
@@ -24,12 +24,20 @@ import java.util.Locale;
  *   getId(), getOwner(), getOwners(), getOwnerCount()
  *   setBackgroundColour(0) — switches the pen to transparent (HUD-only feature)
  *   blit bg may contain '-' meaning transparent for that cell.
+ *
+ * <p>Backed by a {@link HudSource}, so the same peripheral serves both the HUD
+ * Modem block and the pocket computer's HUD upgrade.
  */
 public class HudPeripheral implements IPeripheral {
-    private final HudModemBlockEntity be;
+    private final HudSource source;
 
-    public HudPeripheral(HudModemBlockEntity be) {
-        this.be = be;
+    public HudPeripheral(HudSource source) {
+        this.source = source;
+    }
+
+    /** The source this peripheral writes to. */
+    public HudSource source() {
+        return source;
     }
 
     @Override
@@ -39,7 +47,7 @@ public class HudPeripheral implements IPeripheral {
 
     @Override
     public boolean equals(@Nullable IPeripheral other) {
-        return other instanceof HudPeripheral hp && hp.be == this.be;
+        return other instanceof HudPeripheral hp && hp.source == this.source;
     }
 
     @Override
@@ -49,7 +57,7 @@ public class HudPeripheral implements IPeripheral {
     public void detach(IComputerAccess computer) {}
 
     private HudBuffer buf() {
-        return be.getBuffer();
+        return source.getBuffer();
     }
 
     /**
@@ -106,13 +114,13 @@ public class HudPeripheral implements IPeripheral {
 
     @LuaFunction
     public final void setSize(int width, int height) throws LuaException {
-        if (width < HudModemBlockEntity.MIN_W || width > HudModemBlockEntity.MAX_W) {
-            throw new LuaException("Width must be between " + HudModemBlockEntity.MIN_W + " and " + HudModemBlockEntity.MAX_W);
+        if (width < HudBuffer.MIN_W || width > HudBuffer.MAX_W) {
+            throw new LuaException("Width must be between " + HudBuffer.MIN_W + " and " + HudBuffer.MAX_W);
         }
-        if (height < HudModemBlockEntity.MIN_H || height > HudModemBlockEntity.MAX_H) {
-            throw new LuaException("Height must be between " + HudModemBlockEntity.MIN_H + " and " + HudModemBlockEntity.MAX_H);
+        if (height < HudBuffer.MIN_H || height > HudBuffer.MAX_H) {
+            throw new LuaException("Height must be between " + HudBuffer.MIN_H + " and " + HudBuffer.MAX_H);
         }
-        be.setBufferSize(width, height);
+        source.setBufferSize(width, height);
     }
 
     @LuaFunction
@@ -125,10 +133,10 @@ public class HudPeripheral implements IPeripheral {
         setSize(buf().width, height);
     }
 
-    /** Drops the per-modem override and reverts to the config's default size. */
+    /** Drops the per-source override and reverts to the config's default size. */
     @LuaFunction
     public final void resetSize() {
-        be.resetBufferSize();
+        source.resetBufferSize();
     }
 
     @LuaFunction
@@ -150,7 +158,12 @@ public class HudPeripheral implements IPeripheral {
     @LuaFunction({"getBackgroundColour", "getBackgroundColor"})
     public final int getBackgroundColour() {
         int b = buf().getBackgroundColor();
-        return b < 0 ? 0 : 1 << b;
+        // CC colours are single-bit powers of two; 0 is not a valid colour. When
+        // the pen is transparent (a HUD extension, set via setBackgroundColour(0))
+        // report black — the CC default background — instead of 0. Term-compatible
+        // libraries (e.g. More Fonts) map this through a {[1]=..,[2]=..,..} table
+        // and would get nil for 0, then crash in table.concat/blit.
+        return b < 0 ? (1 << 15) : (1 << b);
     }
 
     @LuaFunction({"setBackgroundColour", "setBackgroundColor"})
@@ -212,23 +225,23 @@ public class HudPeripheral implements IPeripheral {
 
     @LuaFunction
     public final int getId() {
-        return be.getModemId();
+        return source.getSourceId();
     }
 
     @LuaFunction
     public final Object[] getOwner() {
-        java.util.List<String> viewers = be.getCurrentViewers();
+        java.util.List<String> viewers = source.getCurrentViewers();
         return new Object[]{ viewers.isEmpty() ? null : viewers.get(0) };
     }
 
     @LuaFunction
     public final Object[] getOwners() {
-        return be.getCurrentViewers().toArray();
+        return source.getCurrentViewers().toArray();
     }
 
     @LuaFunction
     public final int getOwnerCount() {
-        return be.getCurrentViewers().size();
+        return source.getCurrentViewers().size();
     }
 
     // ---- Display overrides ----
@@ -239,32 +252,32 @@ public class HudPeripheral implements IPeripheral {
 
     @LuaFunction
     public final void setTextShadow(String value) throws LuaException {
-        be.setOverrideTextShadow(parseTextShadow(value));
+        source.setOverrideTextShadow(parseTextShadow(value));
     }
 
     @LuaFunction
     public final String getTextShadow() {
-        return enumName(HudDisplay.TextShadowStyle.values(), be.getOverrideTextShadow());
+        return enumName(HudDisplay.TextShadowStyle.values(), source.getOverrideTextShadow());
     }
 
     @LuaFunction
     public final void setHudFit(String value) throws LuaException {
-        be.setOverrideHudFit(parseHudFit(value));
+        source.setOverrideHudFit(parseHudFit(value));
     }
 
     @LuaFunction
     public final String getHudFit() {
-        return enumName(HudDisplay.HudFit.values(), be.getOverrideHudFit());
+        return enumName(HudDisplay.HudFit.values(), source.getOverrideHudFit());
     }
 
     @LuaFunction({"setShadowLayer", "setTextShadowLayer"})
     public final void setShadowLayer(String value) throws LuaException {
-        be.setOverrideShadowLayer(parseShadowLayer(value));
+        source.setOverrideShadowLayer(parseShadowLayer(value));
     }
 
     @LuaFunction({"getShadowLayer", "getTextShadowLayer"})
     public final String getShadowLayer() {
-        byte b = be.getOverrideShadowLayer();
+        byte b = source.getOverrideShadowLayer();
         if (b == HudDisplay.ShadowLayer.OVER_BACKGROUND.ordinal()) return "over";
         if (b == HudDisplay.ShadowLayer.UNDER_BACKGROUND.ordinal()) return "under";
         return "auto";

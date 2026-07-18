@@ -20,6 +20,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class HudBuffer {
     public static final int TRANSPARENT = -1;
 
+    /** Buffer size bounds, shared by every {@link HudSource} and the peripheral. */
+    public static final int MIN_W = 4, MAX_W = 256;
+    public static final int MIN_H = 1, MAX_H = 128;
+
     public final int width;
     public final int height;
     public final char[][] chars;

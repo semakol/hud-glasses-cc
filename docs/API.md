@@ -136,8 +136,10 @@ Resizes this specific modem. The buffer contents are **cleared**.
 - otherwise → `LuaException`.
 
 After this the modem is flagged "custom" — changes to `hudWidth`/`hudHeight` in
-`hudglassescc-common.toml` no longer touch it. The size is stored in the block's
-NBT and survives server restarts, pistons and Sable sub-levels.
+`hudglassescc-common.toml` no longer touch it. On a **modem block** the size is stored
+in the block's NBT and survives server restarts, pistons and Sable sub-levels. On a
+**pocket computer** it lasts for the session only and resets when the computer reboots,
+so set it at startup.
 
 ```lua
 hud.setSize(60, 20)
@@ -227,7 +229,12 @@ Sets the text colour.
 
 ### `getBackgroundColour() → c`
 
-Returns the current background colour. **`0`** means transparent (HUD extension).
+Returns the current background colour as a CC colour (a single-bit power of two).
+When the pen is transparent (set via `setBackgroundColour(0)`) this reports
+`colors.black` — CC has no "transparent" colour value, and returning `0` would
+break term-compatible libraries (e.g. More Fonts) that map the result through a
+`{[1]=…,[2]=…}` colour table. Set transparency with `setBackgroundColour(0)`; it
+can't be read back.
 
 **Aliases:** `getBackgroundColor`.
 
@@ -289,6 +296,59 @@ defaults on `setSize` / `resetSize`.
 > writes the modem's id onto the item. Whoever wears those glasses (the Curios
 > Glasses slot or the helmet) sees the HUD. Hand the glasses to another player and
 > the HUD moves with them. Any number of players can watch one modem at once.
+
+### Sources: modem block or pocket computer
+
+The peripheral is the same (`hud_glasses`) either way — only where it lives differs:
+
+| Source | Get it | Bind glasses to it |
+|---|---|---|
+| **HUD Modem** (block) | place it, wire it to a computer | right-click the block (glasses in hand, or empty-handed while wearing them) |
+| **Pocket, HUD only** | `pocket computer + HUD Modem` | **sneak + right-click** while holding it and wearing the glasses |
+| **Pocket, HUD + ender modem** | `HUD Modem + Ender Modem` → **HUD Ender Modem**, then `pocket computer + HUD Ender Modem` | same — **sneak + right-click** |
+
+A plain right-click on the pocket computer still opens its terminal — only sneak binds.
+All sources share one id space, so glasses just store the id of the last source you
+bound, and switching is right-clicking whichever one you want. You never take the
+glasses off.
+
+```lua
+-- identical on a pocket computer and a wired-up modem block
+local hud = peripheral.find("hud_glasses")
+hud.write("hello")
+```
+
+### HUD + ender modem in one slot
+
+A pocket computer has only **one** upgrade slot, so a HUD-only upgrade leaves it with
+no networking. The **HUD + Ender Modem** upgrade is both at once — one peripheral that
+answers to two types:
+
+- its primary type is `"modem"`, so `rednet` accepts it (`rednet` compares the primary
+  type exactly);
+- `"hud_glasses"` is an additional type, and `peripheral.find` matches those.
+
+So the *same object* is your screen and your radio:
+
+```lua
+rednet.open("back")                         -- works: primary type is "modem"
+local hud = peripheral.find("hud_glasses")  -- works: matched as an additional type
+hud.write("hello")                          -- HUD half
+hud.transmit(2763, 2763, "ping")            -- modem half (raw modem API too)
+```
+
+The modem half is an **ender** modem: interdimensional and unlimited range. It supports
+the usual `open` / `isOpen` / `close` / `closeAll` / `transmit` / `isWireless` and fires
+`modem_message` events.
+
+Getting one: craft **HUD Modem + Ender Modem** into a **HUD Ender Modem**, then combine
+that with a pocket computer the way you would any CC upgrade (this preserves the
+computer's id and files). Taking the upgrade back off returns the item.
+
+Servers can set `allowPocketHudEnderCraft = false`, which removes the HUD Ender Modem
+recipe entirely — it disappears from JEI/REI and the item is no longer listed. Pocket
+computers that already have the upgrade keep working. The setting is read when recipes
+load, so it needs a `/reload` or restart.
 
 ### `getId() → id`
 
@@ -454,4 +514,4 @@ step; size is set with `setSize`.
 See [CHARS.md](CHARS.md) for the character-encoding reference (the CC font is a
 CP437-style set, addressed by byte value).
 
-![img.png](img.png)
+![The CC:Tweaked font — all 256 characters on the HUD](https://raw.githubusercontent.com/semakol/hud-glasses-cc/main/docs/img.png)

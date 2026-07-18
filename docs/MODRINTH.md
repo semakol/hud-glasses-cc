@@ -1,8 +1,14 @@
 # CC: HUD Glasses
 
+![3d cube](https://cdn.modrinth.com/data/cached_images/9f4a29a051bfc3c3283a671d8ad00213d33c8872.png)
+_3d cube_
+
 Wear a ComputerCraft monitor on your face. A pair of glasses and a special modem
 let any computer draw a heads-up display straight onto a player's screen, using
 the same `monitor`/`term` API you already know.
+
+![helicopter hud with shadow](https://cdn.modrinth.com/data/cached_images/f456c49994b2536b4cfd590e878c0f36606d9158.png)
+_helicopter hud with shadow_
 
 ## What it does
 
@@ -37,16 +43,17 @@ If you've ever written a monitor program, you already know this peripheral.
 - Runtime resolution — setSize(w, h) from Lua, or set defaults in the config.
   Fewer cells means bigger text. Choose how the grid maps to the screen: FIT
   (keep aspect, letterbox), STRETCH (fill the screen), or COVER (fill + crop).
-- Readable text — optional drop shadow or black outline behind glyphs, drawn over
-  or under the cell backgrounds.
-- Computer-driven display — a computer can force the text shadow, screen fit and
-  shadow layer for everyone watching a modem (setTextShadow / setHudFit /
-  setShadowLayer), or leave them on "auto" so each viewer's own setting wins. It
-  never edits anyone's config file.
 - Shared screens — bind several glasses to one modem and everyone sees the same
   display. Good for team status boards, base alarms, and shared coordinates.
 - Place anywhere — the modem mounts on any block face (floor, wall, ceiling),
   screen facing out.
+- Portable HUD — craft a pocket computer together with a HUD Modem to give it the HUD
+  upgrade, and carry the display with you. Same hud_glasses peripheral; bind your worn
+  glasses to it with sneak + right-click (a plain right-click still opens the terminal).
+- HUD + ender modem in one slot — a pocket computer only has one upgrade slot, so craft
+  a HUD Ender Modem (HUD Modem + Ender Modem) and fit it to the pocket: one peripheral
+  that is both screen and radio. rednet works on it, peripheral.find("hud_glasses") finds
+  it, and the modem half is interdimensional. Servers can turn the recipe off in config.
 - In-game config — edit settings from the Mods list "Config" button, or bind a
   key to jump straight to the client settings.
 - Toggle key — press H to hide or show the HUD; the setting persists.
@@ -68,6 +75,9 @@ If you've ever written a monitor program, you already know this peripheral.
   a flying sub-level. Sable Companion is bundled, so there's nothing extra to
   install.
 
+![power armor hud with weapon](https://cdn.modrinth.com/data/cached_images/f0f91653b4dd93c92eed2a0462287a737852e772.png)
+_power armor hud with weapon_
+
 ## Configuration
 
 Server (hudglassescc-common.toml, applied live):
@@ -76,6 +86,8 @@ Server (hudglassescc-common.toml, applied live):
 - hudHeight (default 28) — default grid height in characters
 - maxRangeBlocks (default -1) — max modem-to-player distance in blocks, -1 means
   unlimited
+- allowPocketHudEnderCraft (default true) — whether the HUD Ender Modem can be crafted.
+  false removes the recipe entirely; pockets that already have the upgrade keep working
 
 Client (hudglassescc-client.toml, per-player):
 
@@ -84,11 +96,6 @@ Client (hudglassescc-client.toml, per-player):
   letterbox), STRETCH (fill, may distort), COVER (fill, crops overflow)
 - textShadow (default NONE) — text shadow style: NONE / SHADOW / OUTLINE
   (experimental)
-- textShadowLayer (default OVER_BACKGROUND) — draw the shadow/outline over or under
-  the cell backgrounds (experimental)
-
-A bound modem can override hudFit, textShadow and textShadowLayer for its viewers
-from Lua; "auto" (the default) leaves each value to the player's own setting above.
 
 ## Status
 

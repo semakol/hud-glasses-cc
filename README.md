@@ -21,6 +21,11 @@ binding stay correct when the modem rides inside a flying sub-level.
 - 🕶️ **Renders on the head** — standard armor model; HUD fills the screen
 - 🔗 **Binding follows the glasses** — transfer the item, transfer the HUD; any
   number of players can watch one modem
+- 🎒 **Portable too** — craft `pocket computer + HUD Modem` for a HUD you carry; bind
+  it with sneak + right-click, no need to take the glasses off
+- 📡 **HUD + ender modem in one slot** — craft a **HUD Ender Modem** (`HUD Modem +
+  Ender Modem`) and fit it to a pocket computer for a single peripheral that's both
+  screen and radio, so `rednet` still works on the pocket's only upgrade slot
 - 🆔 **Stable modem IDs** — binding survives the modem moving into a Create
   Aeronautics sub-level (bundled Sable Companion)
 - 📡 **Optional range limit** — configurable, unlimited by default
@@ -108,6 +113,7 @@ one server tick of an edit.
 | `hudWidth` | 80 | Text grid width in characters. Fewer cells → bigger text. |
 | `hudHeight` | 28 | Text grid height. |
 | `maxRangeBlocks` | -1 | Max modem↔player distance in blocks. `-1` = unlimited. |
+| `allowPocketHudEnderCraft` | true | Whether the **HUD Ender Modem** can be crafted. `false` removes the recipe entirely (gone from JEI, item unlisted); pockets that already have the upgrade keep working. Needs `/reload`. |
 
 Client config (`config/hudglassescc-client.toml`, per-player):
 

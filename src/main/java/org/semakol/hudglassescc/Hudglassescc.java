@@ -1,7 +1,10 @@
 package org.semakol.hudglassescc;
 
 import com.mojang.logging.LogUtils;
+import com.mojang.serialization.MapCodec;
 import dan200.computercraft.api.peripheral.PeripheralCapability;
+import dan200.computercraft.api.pocket.IPocketUpgrade;
+import dan200.computercraft.api.upgrades.UpgradeType;
 import net.minecraft.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
@@ -31,6 +34,8 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.conditions.ICondition;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -42,10 +47,14 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import org.semakol.hudglassescc.block.HudModemBlock;
 import org.semakol.hudglassescc.block.entity.HudModemBlockEntity;
 import org.semakol.hudglassescc.compat.CuriosCompat;
+import org.semakol.hudglassescc.condition.HudEnderCraftCondition;
 import org.semakol.hudglassescc.hud.HudManager;
 import org.semakol.hudglassescc.item.BoundModemData;
 import org.semakol.hudglassescc.item.HudGlassesItem;
+import org.semakol.hudglassescc.item.PocketHudData;
 import org.semakol.hudglassescc.network.HudPayloads;
+import org.semakol.hudglassescc.pocket.HudEnderPocketUpgrade;
+import org.semakol.hudglassescc.pocket.HudGlassesPocketUpgrade;
 import org.slf4j.Logger;
 
 import java.util.EnumMap;
@@ -70,10 +79,44 @@ public class Hudglassescc {
     public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS =
             DeferredRegister.create(Registries.ARMOR_MATERIAL, MODID);
 
+    /** CC:Tweaked pocket upgrade *types*; the upgrade instance itself is data-driven. */
+    public static final DeferredRegister<UpgradeType<? extends IPocketUpgrade>> POCKET_UPGRADE_TYPES =
+            DeferredRegister.create(IPocketUpgrade.typeRegistry(), MODID);
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<BoundModemData>> BOUND_MODEM =
             DATA_COMPONENTS.registerComponentType("bound_modem", builder -> builder
                     .persistent(BoundModemData.CODEC)
                     .networkSynchronized(BoundModemData.STREAM_CODEC));
+
+    /** Stable HUD source id of a pocket computer's HUD upgrade (lives in the upgrade's data). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PocketHudData>> POCKET_HUD_ID =
+            DATA_COMPONENTS.registerComponentType("pocket_hud_id", builder -> builder
+                    .persistent(PocketHudData.CODEC)
+                    .networkSynchronized(PocketHudData.STREAM_CODEC));
+
+    public static final DeferredHolder<UpgradeType<? extends IPocketUpgrade>, UpgradeType<HudGlassesPocketUpgrade>>
+            HUD_POCKET_UPGRADE_TYPE = POCKET_UPGRADE_TYPES.register("hud_glasses",
+                    () -> UpgradeType.simple(new HudGlassesPocketUpgrade()));
+
+    public static final DeferredHolder<UpgradeType<? extends IPocketUpgrade>, UpgradeType<HudEnderPocketUpgrade>>
+            HUD_ENDER_UPGRADE_TYPE = POCKET_UPGRADE_TYPES.register("hud_ender",
+                    () -> UpgradeType.simple(new HudEnderPocketUpgrade()));
+
+    /**
+     * Represents the HUD+ender pocket upgrade. Crafted from a HUD Modem + an Ender
+     * Modem, then fitted to a pocket computer through CC's own upgrade recipe (CC's
+     * JEI integration walks the upgrade registry, so that step shows up on its own).
+     * Its recipe is gated on {@code allowPocketHudEnderCraft}.
+     */
+    public static final DeferredItem<Item> HUD_ENDER_MODEM_ITEM = ITEMS.register("hud_ender_modem",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+
+    public static final DeferredRegister<MapCodec<? extends ICondition>> CONDITION_CODECS =
+            DeferredRegister.create(NeoForgeRegistries.Keys.CONDITION_CODECS, MODID);
+
+    public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<HudEnderCraftCondition>>
+            HUD_ENDER_CRAFT_CONDITION = CONDITION_CODECS.register("hud_ender_craft",
+                    () -> HudEnderCraftCondition.CODEC);
 
     public static final DeferredHolder<ArmorMaterial, ArmorMaterial> HUD_GLASSES_MATERIAL =
             ARMOR_MATERIALS.register("hud_glasses", () -> new ArmorMaterial(
@@ -113,6 +156,8 @@ public class Hudglassescc {
         BLOCK_ENTITIES.register(modEventBus);
         DATA_COMPONENTS.register(modEventBus);
         ARMOR_MATERIALS.register(modEventBus);
+        POCKET_UPGRADE_TYPES.register(modEventBus);
+        CONDITION_CODECS.register(modEventBus);
 
         modEventBus.addListener(HudPayloads::register);
         modEventBus.addListener(Hudglassescc::onRegisterCapabilities);
@@ -147,6 +192,8 @@ public class Hudglassescc {
         if (event.getTabKey().equals(CC_CREATIVE_TAB)) {
             event.accept(HUD_GLASSES);
             event.accept(HUD_MODEM_ITEM);
+            // Disabled by config → no recipe and not listed, so it's effectively gone.
+            if (Config.allowPocketHudEnderCraft) event.accept(HUD_ENDER_MODEM_ITEM);
         }
     }
 
