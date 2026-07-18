@@ -1,0 +1,21 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "hudglassescc:hud_ender_craft"
+    }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "hudglassescc:hud_modem"
+    },
+    {
+      "item": "computercraft:wireless_modem_advanced"
+    }
+  ],
+  "result": {
+    "id": "hudglassescc:hud_ender_modem",
+    "count": 1
+  }
+}
