@@ -10,6 +10,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import org.semakol.hudglassescc.ClientConfig;
 import org.semakol.hudglassescc.Hudglassescc;
@@ -34,7 +35,11 @@ public final class ClientSetup {
 
     @SubscribeEvent
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
-        event.registerAboveAll(Hudglassescc.id("hud_glasses"), HudOverlay::render);
+        // Just below the F3 debug overlay rather than above everything: a full-screen
+        // HUD would otherwise bury the debug screen, chat and the player list, and
+        // there'd be no way to read them without switching the HUD off.
+        event.registerBelow(VanillaGuiLayers.DEBUG_OVERLAY,
+                Hudglassescc.id("hud_glasses"), HudOverlay::render);
     }
 
     @SubscribeEvent

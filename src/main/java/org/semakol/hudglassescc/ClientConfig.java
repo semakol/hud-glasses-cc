@@ -57,6 +57,17 @@ public class ClientConfig {
             .translation("hudglassescc.config.hudFit")
             .defineEnum("hudFit", HudDisplay.HudFit.FIT);
 
+    public static final ModConfigSpec.BooleanValue FAST_GLYPH_RENDERING = BUILDER
+            .comment(
+                    "Draw HUD text straight from cached glyphs instead of going through",
+                    "Font#drawInBatch. Much faster at large HUD sizes and the default.",
+                    "Turn this off only if another mod's text/HUD rendering conflicts with it",
+                    "(garbled glyphs, or a crash inside HUD rendering) — the HUD then falls",
+                    "back to the slower vanilla path."
+            )
+            .translation("hudglassescc.config.fastGlyphRendering")
+            .define("fastGlyphRendering", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     @SubscribeEvent

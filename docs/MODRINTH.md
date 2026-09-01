@@ -96,6 +96,10 @@ Client (hudglassescc-client.toml, per-player):
   letterbox), STRETCH (fill, may distort), COVER (fill, crops overflow)
 - textShadow (default NONE) — text shadow style: NONE / SHADOW / OUTLINE
   (experimental)
+- textShadowLayer (default OVER_BACKGROUND) — whether the shadow/outline is drawn over or
+  under the cell backgrounds (experimental)
+- fastGlyphRendering (default true) — draw HUD text from cached glyphs, much faster at
+  large HUD sizes. Turn off only if another mod's text rendering conflicts with it
 
 ## Status
 

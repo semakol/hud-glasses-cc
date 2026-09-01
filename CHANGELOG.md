@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.1.4-beta
+
+- **OUTLINE text shadow is much cheaper.** It used to draw every glyph five times (four
+  black copies plus the glyph). The mod now ships a pre-dilated copy of the font atlas,
+  so the outline is a single black draw and OUTLINE costs two draws per glyph instead of
+  five. It looks identical: dilating a glyph by 1px in four directions is exactly what the
+  four offset copies produced, and the font is 1-bit pixel art so nothing blurs. If the
+  outline atlas ever fails to load, the old four-copy path still runs.
+- **The F3 debug screen, chat and the player list now draw on top of the HUD.** The
+  overlay used to sit above every other GUI layer, so a full-screen HUD buried them with
+  no way to read them short of switching the HUD off. It now renders just below the debug
+  overlay instead.
+- **Much faster rendering at large HUD sizes.** The glyph pass no longer goes through
+  `Font#drawInBatch` per cell, which allocated twice and re-resolved the font set, glyph
+  info, baked glyph and style for every character, every frame. Glyphs are now baked
+  once and their vertices written straight into the batch, so the pass is allocation-free
+  and the palette is unpacked once per frame instead of once per cell. This scaled with
+  cell count, so the bigger the HUD the bigger the win (`setSize(256, 96)` was hit hardest).
+  New client setting `fastGlyphRendering` (default `true`) turns this off again if another
+  mod's text/HUD rendering conflicts with it.
+
 ## 0.1.3-beta
 
 - **HUD on a pocket computer.** Craft `pocket computer + HUD Modem` to give it the HUD

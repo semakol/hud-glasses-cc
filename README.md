@@ -123,6 +123,7 @@ Client config (`config/hudglassescc-client.toml`, per-player):
 | `hudFit` | FIT | How the HUD scales to the screen — see [Screen resolution](#screen-resolution). |
 | `textShadow` | NONE | Text shadow style: `NONE` / `SHADOW` / `OUTLINE`. *(experimental)* |
 | `textShadowLayer` | OVER_BACKGROUND | Shadow vs. cell backgrounds: `OVER_BACKGROUND` (bg → shadow → text) or `UNDER_BACKGROUND` (shadow → bg → text). *(experimental)* |
+| `fastGlyphRendering` | true | Draw HUD text from cached glyphs — much faster at large sizes. Turn off only if another mod's text/HUD rendering conflicts (garbled glyphs, or a crash inside HUD rendering); the HUD then falls back to the slower vanilla path. |
 
 Edit these from **Mods → CC: HUD Glasses → Config**, or bind a key to "Open
 settings" to jump straight to the client section.
